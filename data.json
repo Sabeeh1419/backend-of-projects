@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "name": "E-Commerce Platform",
+    "description": "A full-featured e-commerce platform with product listings, user authentication, and a shopping cart."
+  },
+  {
+    "id": 2,
+    "name": "Task Management App",
+    "description": "A web application for managing tasks with features like deadlines, priority levels, and collaboration tools."
+  },
+  {
+    "id": 3,
+    "name": "Personal Finance Tracker",
+    "description": "An app that helps users track their income, expenses, and set financial goals."
+  },
+  {
+    "id": 4,
+    "name": "AI Chatbot",
+    "description": "A chatbot powered by artificial intelligence that assists users with customer service inquiries."
+  },
+  {
+    "id": 5,
+    "name": "Real Estate Listing Website",
+    "description": "A platform where users can browse, list, and rent or buy real estate properties."
+  }
+]
