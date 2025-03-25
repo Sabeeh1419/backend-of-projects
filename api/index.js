@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
-const serverless = require("serverless-http");
+
 // Load environment variables
 // const MONGODB_URI = process.env.MONGODB_URI;
 // const PORT = process.env.PORT || 5000;
@@ -87,5 +87,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-module.exports = app;
-module.exports.handler = serverless(app);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`MongoDB connected to: ${mongoose.connection.host}`);
+});
