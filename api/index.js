@@ -87,7 +87,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`MongoDB connected to: ${mongoose.connection.host}`);
-});
+module.exports = app;
+module.exports.handler = serverless(app);
