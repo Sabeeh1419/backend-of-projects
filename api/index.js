@@ -16,8 +16,7 @@ app.use(express.json());
 // MongoDB Connection with error handling
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000
+  useUnifiedTopology: true
 })
 .then(() => console.log('Successfully connected to MongoDB Atlas'))
 .catch(err => {
