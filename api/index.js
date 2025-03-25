@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
-
+const serverless = require("serverless-http");
 // Load environment variables
 // const MONGODB_URI = process.env.MONGODB_URI;
 // const PORT = process.env.PORT || 5000;
