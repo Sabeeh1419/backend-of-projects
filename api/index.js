@@ -63,21 +63,89 @@ app.get("/", (req, res) => {
     res.send("Hello from Vercel!");
 });
 
-app.post('/api/projects', async (req, res) => {
-  try {
-    const project = new Project(req.body);
-    await project.save();
-    res.status(201).json(project);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ error: err.message });
+app.get('/api/projects/count', async (req, res) => {
+    try {
+      const count = await Project.countDocuments({});
+      res.json({ 
+        status: 'success',
+        count 
+      });
+    } catch (err) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to get project count',
+        error: err.message
+      });
     }
-    if (err.code === 11000) {
-      return res.status(400).json({ error: 'Project name already exists' });
+  });
+
+  app.post('/api/projects', async (req, res) => {
+    try {
+      const { name, description } = req.body;
+  
+      // Check for existing project (case-insensitive)
+      const existingProject = await Project.findOne({ 
+        name: { $regex: new RegExp(`^${name}$`, 'i') }
+      });
+  
+      if (existingProject) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Project name already exists'
+        });
+      }
+  
+      // Create new project
+      const newProject = await Project.create({ name, description });
+      
+      res.status(201).json({
+        status: 'success',
+        data: {
+          project: newProject
+        }
+      });
+  
+    } catch (err) {
+      // Handle validation errors
+      if (err.name === 'ValidationError') {
+        const messages = Object.values(err.errors).map(val => val.message);
+        return res.status(400).json({
+          status: 'error',
+          message: messages.join(', ')
+        });
+      }
+      
+      res.status(500).json({
+        status: 'error',
+        message: 'Server error'
+      });
     }
-    res.status(500).json({ error: 'Failed to create project' });
-  }
-});
+  });
+  
+  // DELETE endpoint
+  app.delete('/api/projects/:id', async (req, res) => {
+    try {
+      const project = await Project.findByIdAndDelete(req.params.id);
+  
+      if (!project) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Project not found'
+        });
+      }
+  
+      res.status(204).json({
+        status: 'success',
+        data: null
+      });
+  
+    } catch (err) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Server error'
+      });
+    }
+  });
 
 // Add other CRUD endpoints (GET by ID, PUT, DELETE)
 
