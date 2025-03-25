@@ -1,84 +1,89 @@
+require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 const app = express();
-const port = 5000;
 
+// Load environment variables
+const MONGODB_URI = process.env.MONGODB_URI;
+const PORT = process.env.PORT || 5000;
+// || 'mongodb+srv://<username>:<password>@cluster0.j2hy4.mongodb.net/crud_operation?retryWrites=true&w=majority';
+// Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
-const dataFilePath = './data.json';
-let projects = [];
+// MongoDB Connection with error handling
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log('Successfully connected to MongoDB Atlas'))
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1); // Exit if DB connection fails
+});
 
-try {
-  const data = fs.readFileSync(dataFilePath);
-  projects = JSON.parse(data);
-  console.log('Data loaded from file:', projects);
-} catch (err) {
-  console.error('Error reading data file:', err);
-}
+// Project Schema with validation
+const projectSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Project name is required'],
+    minlength: [3, 'Project name must be at least 3 characters'],
+    trim: true,
+    unique: true
+  },
+  description: {
+    type: String,
+    required: [true, 'Project description is required'],
+    trim: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
 
-const saveData = () => {
+// Add case-insensitive index for name
+projectSchema.index({ name: 1 }, { collation: { locale: 'en', strength: 2 } });
+
+const Project = mongoose.model('Project', projectSchema);
+
+// API Routes
+app.get('/api/projects', async (req, res) => {
   try {
-    fs.writeFileSync(dataFilePath, JSON.stringify(projects, null, 2));
-    console.log('Data saved to file successfully.');
+    const projects = await Project.find().sort({ createdAt: -1 });
+    res.json(projects);
   } catch (err) {
-    console.error('Error saving data to file:', err);
+    res.status(500).json({ error: 'Failed to fetch projects' });
   }
-};
-
-app.get('/', (req, res) => {
-  res.send('Welcome to the Project Manager API!');
 });
 
-app.get('/api/projects/count', (req, res) => {
-  res.json({ count: projects.length });
+app.post('/api/projects', async (req, res) => {
+  try {
+    const project = new Project(req.body);
+    await project.save();
+    res.status(201).json(project);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'Project name already exists' });
+    }
+    res.status(500).json({ error: 'Failed to create project' });
+  }
 });
 
-app.get('/api/projects', (req, res) => {
-  res.json(projects);
+// Add other CRUD endpoints (GET by ID, PUT, DELETE)
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.post('/api/projects', (req, res) => {
-  const { name, description } = req.body;
-
-  console.log('Received request body:', req.body); // Debugging
-
-  if (name.length < 3) {
-    return res.status(400).json({ status: 'error', message: 'Project name must be at least 3 characters' });
-  }
-
-  if (!description) {
-    return res.status(400).json({ status: 'error', message: 'Project description is required' });
-  }
-
-  const isDuplicate = projects.some((project) => project.name.toLowerCase() === name.toLowerCase());
-  if (isDuplicate) {
-    return res.status(400).json({ status: 'error', message: 'Project name already exists' });
-  }
-
-  const newProject = { id: projects.length + 1, name, description };
-  projects.push(newProject);
-  saveData();
-  res.status(201).json(newProject);
-});
-
-app.delete('/api/projects/:id', (req, res) => {
-  const { id } = req.params;
-  const projectIndex = projects.findIndex((project) => project.id === parseInt(id));
-
-  if (projectIndex === -1) {
-    return res.status(404).json({ status: 'error', message: 'Project not found' });
-  }
-
-  const deletedProject = projects.splice(projectIndex, 1)[0];
-  saveData();
-  res.json(deletedProject);
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`MongoDB connected to: ${mongoose.connection.host}`);
 });
