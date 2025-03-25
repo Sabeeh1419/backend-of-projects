@@ -120,6 +120,68 @@ app.get('/api/projects/count', async (req, res) => {
       });
     }
   });
+
+  // PUT endpoint for updating a project
+app.put('/api/projects/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    // Find the existing project
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Project not found'
+      });
+    }
+
+    // Check if name is being changed
+    if (name && name !== project.name) {
+      // Check for existing project with new name (case-insensitive)
+      const existingProject = await Project.findOne({
+        name: { $regex: new RegExp(`^${name}$`, 'i') },
+        _id: { $ne: id } // Exclude current project
+      });
+
+      if (existingProject) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Project name already exists'
+        });
+      }
+      project.name = name;
+    }
+
+    // Update description if provided
+    if (description) project.description = description;
+
+    // Save the updated project
+    const updatedProject = await project.save();
+
+    res.json({
+      status: 'success',
+      data: {
+        project: updatedProject
+      }
+    });
+
+  } catch (err) {
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({
+        status: 'error',
+        message: messages.join(', ')
+      });
+    }
+    
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
   
   // DELETE endpoint
   app.delete('/api/projects/:id', async (req, res) => {
