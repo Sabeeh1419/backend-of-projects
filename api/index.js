@@ -5,9 +5,6 @@ const cors = require('cors');
 const app = express();
 
 // Load environment variables
-// const MONGODB_URI = process.env.MONGODB_URI;
-// const PORT = process.env.PORT || 5000;
-// || 'mongodb+srv://<username>:<password>@cluster0.j2hy4.mongodb.net/crud_operation?retryWrites=true&w=majority';
 const MONGODB_URI="mongodb+srv://sabeehhassanfarooqui:sabeeh1419@cluster0.j2hy4.mongodb.net/crud_operation?retryWrites=true&w=majority&appName=Cluster0";
 const PORT=5000;
 // Middleware
@@ -58,9 +55,15 @@ app.get('/api/projects', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
 });
-app.get("/", (req, res) => {
-    res.send("Hello from Vercel!");
-});
+app.get("/", async (req, res) => {
+  try {
+      res.send("My all projects are here");
+      const projects = await Project.find().sort({ createdAt: -1 });
+      res.json(projects);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  });
 
 app.get('/api/projects/count', async (req, res) => {
     try {
