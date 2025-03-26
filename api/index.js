@@ -57,9 +57,9 @@ app.get('/api/projects', async (req, res) => {
 });
 app.get("/", async (req, res) => {
   try {
-      res.send("My all projects are here");
-      const projects = await Project.find().sort({ createdAt: -1 });
-      res.json(projects);
+    const projects = await Project.find().sort({ createdAt: -1 });
+    res.json(projects);
+    res.send("My all projects are here");
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch projects' });
     }
