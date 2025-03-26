@@ -59,7 +59,6 @@ app.get("/", async (req, res) => {
   try {
     const projects = await Project.find().sort({ createdAt: -1 });
     res.json(projects);
-    res.send("My all projects are here");
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch projects' });
     }
